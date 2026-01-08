@@ -1,0 +1,27 @@
+# Built outputs
+/build
+/app/build
+
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+
+# Android Studio
+.idea/
+*.iml
+local.properties
+.DS_Store
+
+# Keystore
+*.jks
+*.keystore
+
+# Google Services
+google-services.json
+
+# Misc
+*.log
+.externalNativeBuild
+.cxx/
+captures/
