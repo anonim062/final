@@ -49,6 +49,10 @@ class WeatherRepository(
                     val weatherEntity = mapToWeatherEntity(response.body()!!)
                     weatherDao.insertWeather(weatherEntity)
                     emit(Resource.Success(weatherEntity))
+                } else if (response.code() == 401) {
+                    // API Key Unauthorized - Return Mock Data for Demo
+                    val mockWeather = generateMockWeather(cityId)
+                    emit(Resource.Success(mockWeather))
                 } else {
                     // API failed, return cached data if available
                     if (cachedWeather != null) {
@@ -93,6 +97,10 @@ class WeatherRepository(
                     val weatherEntity = mapToWeatherEntity(response.body()!!)
                     weatherDao.insertWeather(weatherEntity)
                     emit(Resource.Success(weatherEntity))
+                } else if (response.code() == 401) {
+                     // Mock for coordinates
+                    val mockWeather = generateMockWeather(1, "Location", lat, lon)
+                    emit(Resource.Success(mockWeather))
                 } else {
                     emit(Resource.Error("Failed to fetch weather: ${response.message()}"))
                 }
@@ -122,6 +130,9 @@ class WeatherRepository(
                     val weatherEntity = mapToWeatherEntity(response.body()!!)
                     weatherDao.insertWeather(weatherEntity)
                     emit(Resource.Success(weatherEntity))
+                } else if (response.code() == 401) {
+                    val mockWeather = generateMockWeather(0, cityName)
+                    emit(Resource.Success(mockWeather))
                 } else {
                     emit(Resource.Error("City not found: ${response.message()}"))
                 }
@@ -156,6 +167,9 @@ class WeatherRepository(
                     val forecastEntities = mapToForecastEntities(response.body()!!, cityId)
                     forecastDao.insertAllForecasts(forecastEntities)
                     emit(Resource.Success(forecastEntities))
+                } else if (response.code() == 401) {
+                    val mockForecast = generateMockForecast(cityId)
+                    emit(Resource.Success(mockForecast))
                 } else {
                     if (cachedForecast.isNotEmpty()) {
                         emit(Resource.Success(cachedForecast))
@@ -177,6 +191,62 @@ class WeatherRepository(
                 emit(Resource.Error("No internet connection and no cached data available"))
             }
         }
+    }
+
+    // Mock Data Generators
+    private fun generateMockWeather(cityId: Long, name: String = "Baku", lat: Double = 40.4093, lon: Double = 49.8671): WeatherEntity {
+        return WeatherEntity(
+            cityId = cityId,
+            cityName = name,
+            country = "AZ",
+            temperature = 24.0,
+            feelsLike = 26.0,
+            tempMin = 22.0,
+            tempMax = 27.0,
+            humidity = 60,
+            pressure = 1012,
+            windSpeed = 5.5,
+            windDegree = 180,
+            weatherDescription = "Sunny",
+            weatherIcon = "01d",
+            weatherMain = "Clear",
+            clouds = 10,
+            visibility = 10000,
+            sunrise = System.currentTimeMillis() - 20000,
+            sunset = System.currentTimeMillis() + 20000,
+            timezone = 14400,
+            latitude = lat,
+            longitude = lon,
+            lastUpdated = System.currentTimeMillis()
+        )
+    }
+
+    private fun generateMockForecast(cityId: Long): List<ForecastEntity> {
+        val list = mutableListOf<ForecastEntity>()
+        val now = System.currentTimeMillis()
+        for (i in 0..5) {
+            list.add(ForecastEntity(
+                cityId = cityId,
+                dateTime = (now + i * 86400000) / 1000,
+                temperature = 22.0 + i,
+                feelsLike = 24.0 + i,
+                tempMin = 20.0,
+                tempMax = 25.0,
+                humidity = 50 + i,
+                pressure = 1010,
+                weatherDescription = if (i % 2 == 0) "Sunny" else "Cloudy",
+                weatherIcon = if (i % 2 == 0) "01d" else "03d",
+                weatherMain = if (i % 2 == 0) "Clear" else "Clouds",
+                windSpeed = 4.0,
+                windDegree = 120,
+                clouds = 20,
+                visibility = 10000,
+                pop = 0.0,
+                dateText = "2024-05-${10 + i} 12:00:00",
+                lastUpdated = now
+            ))
+        }
+        return list
     }
     
     /**

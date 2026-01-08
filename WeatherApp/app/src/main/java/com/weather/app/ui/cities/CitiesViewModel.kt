@@ -62,14 +62,25 @@ class CitiesViewModel(
     /**
      * Load weather data for all cities.
      */
+    private val weatherMap = mutableMapOf<Long, WeatherEntity>()
+
+    /**
+     * Load weather data for all cities.
+     */
     private fun loadCitiesWeather(cities: List<CityEntity>) {
-        viewModelScope.launch {
-            val weatherMap = mutableMapOf<Long, WeatherEntity>()
-            cities.forEach { city ->
+        cities.forEach { city ->
+            // Only fetch if we don't have fresh data (optional optimization, but good for flickering)
+            // For now, we fetch to ensure it's up to date.
+            
+            viewModelScope.launch {
                 weatherRepository.getCurrentWeather(city.id).collectLatest { resource ->
                     if (resource is Resource.Success && resource.data != null) {
-                        weatherMap[city.id] = resource.data
-                        _citiesWeather.value = weatherMap.toMap()
+                        val weather = resource.data
+                        if (weatherMap[city.id] != weather) {
+                            weatherMap[city.id] = weather
+                            // Post the whole map. Creating a new map ensures LiveData emits distinct change.
+                            _citiesWeather.postValue(HashMap(weatherMap))
+                        }
                     }
                 }
             }

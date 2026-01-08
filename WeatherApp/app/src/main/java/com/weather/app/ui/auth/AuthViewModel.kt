@@ -9,6 +9,7 @@ import com.weather.app.data.local.entity.UserEntity
 import com.weather.app.data.repository.UserRepository
 import com.weather.app.util.PreferencesManager
 import com.weather.app.util.Resource
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class AuthViewModel(private val repository: UserRepository) : ViewModel() {
@@ -26,7 +27,7 @@ class AuthViewModel(private val repository: UserRepository) : ViewModel() {
         }
 
         _loginResult.value = Resource.Loading()
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = repository.login(username, password)
             if (result is Resource.Success) {
                 // Save session
@@ -34,7 +35,7 @@ class AuthViewModel(private val repository: UserRepository) : ViewModel() {
                     PreferencesManager.currentUserId = it.id
                 }
             }
-            _loginResult.value = result
+            _loginResult.postValue(result)
         }
     }
 
@@ -50,7 +51,7 @@ class AuthViewModel(private val repository: UserRepository) : ViewModel() {
         }
 
         _registerResult.value = Resource.Loading()
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val result = repository.register(username, email, password)
             if (result is Resource.Success) {
                 // Auto login after registration
@@ -58,7 +59,7 @@ class AuthViewModel(private val repository: UserRepository) : ViewModel() {
                     PreferencesManager.currentUserId = userId
                 }
             }
-            _registerResult.value = result
+            _registerResult.postValue(result)
         }
     }
 }

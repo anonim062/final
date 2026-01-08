@@ -49,35 +49,19 @@ class SavedCitiesAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
         
         private var currentCity: CityEntity? = null
-        private var showDelete = false
-        
         init {
             binding.root.setOnClickListener {
-                if (showDelete) {
-                    showDelete = false
-                    binding.imageDelete.visibility = View.GONE
-                    binding.imageWeatherIcon.visibility = View.VISIBLE
-                } else {
-                    currentCity?.let { onCityClick(it) }
-                }
+                currentCity?.let { onCityClick(it) }
             }
             
             binding.root.setOnLongClickListener {
-                showDelete = !showDelete
-                binding.imageDelete.visibility = if (showDelete) View.VISIBLE else View.GONE
-                binding.imageWeatherIcon.visibility = if (showDelete) View.GONE else View.VISIBLE
                 currentCity?.let { onCityLongClick(it) }
                 true
-            }
-            
-            binding.imageDelete.setOnClickListener {
-                currentCity?.let { onDeleteClick(it) }
             }
         }
         
         fun bind(city: CityEntity, weather: WeatherEntity?) {
             currentCity = city
-            showDelete = false
             
             val unit = PreferencesManager.temperatureUnit.getSymbol()
             
@@ -96,13 +80,14 @@ class SavedCitiesAdapter(
                 
                 val iconUrl = String.format(Constants.WEATHER_ICON_URL, weather.weatherIcon)
                 Glide.with(binding.root.context)
-                    .load(iconUrl)
-                    .into(binding.imageWeatherIcon)
+                .load(iconUrl)
+                .into(binding.imageWeatherIcon)
             } else {
                 binding.textWeatherDescription.text = ""
                 binding.textTemperature.text = "--"
             }
             
+            // Ensure delete icon is hidden (we use swipe or long press dialog now)
             binding.imageDelete.visibility = View.GONE
             binding.imageWeatherIcon.visibility = View.VISIBLE
         }

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.weather.app.WeatherApplication
 import com.weather.app.data.local.entity.CityEntity
 import com.weather.app.data.local.entity.WeatherEntity
+import com.weather.app.data.remote.model.GeocodingResponse
 import com.weather.app.data.repository.CityRepository
 import com.weather.app.data.repository.WeatherRepository
 import com.weather.app.util.PreferencesManager
@@ -48,9 +49,31 @@ class HomeViewModel(
         viewModelScope.launch {
             cityRepository.getDefaultCity().collectLatest { city ->
                 _currentCity.value = city
-                city?.let {
-                    fetchWeather(it.id)
+                if (city != null) {
+                    fetchWeather(city.id)
+                } else {
+                    initializeDefaultCity()
                 }
+            }
+        }
+    }
+
+    private fun initializeDefaultCity() {
+        viewModelScope.launch {
+            // Try to find Baku as default
+            val topCities = cityRepository.getTopCities()
+            val defaultCity = topCities.find { it.name.equals("Baku", ignoreCase = true) } 
+                ?: topCities.firstOrNull()
+            
+            defaultCity?.let {
+                val response = GeocodingResponse(
+                    name = it.name,
+                    latitude = it.latitude,
+                    longitude = it.longitude,
+                    country = it.country ?: "",
+                    state = null
+                )
+                cityRepository.addCityFromGeocodingResponse(response)
             }
         }
     }
